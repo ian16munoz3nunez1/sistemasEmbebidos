@@ -17,8 +17,8 @@
 #pragma config WRT=OFF
 
 #define _XTAL_FREQ 4000000
-#define incremento PORTAbits.RA0
-#define decremento PORTAbits.RA1
+#define asc PORTAbits.RA0
+#define desc PORTAbits.RA1
 #define salida PORTB
 
 unsigned char numeros[] = {
@@ -37,7 +37,7 @@ unsigned char numeros[] = {
 
 void main(void)
 {
-    int i=0, asc=0, desc=0;
+    int i=0;
 
     TRISA = 0x03;
     TRISB = 0x00;
@@ -46,11 +46,19 @@ void main(void)
 
     while(1)
     {
-        if(incremento && !asc){i++; asc=1;}
-        if(!incremento) asc=0;
+        if(asc)
+        {
+            __delay_ms(200);
+            while(asc){NOP();}
+            i++;
+        }
 
-        if(decremento && !desc){i--; desc=1;}
-        if(!decremento) desc=0;
+        if(desc)
+        {
+            __delay_ms(200);
+            while(desc){NOP();}
+            i--;
+        }
 
         if(i > 9) i = 0;
         if(i < 0) i = 9;
