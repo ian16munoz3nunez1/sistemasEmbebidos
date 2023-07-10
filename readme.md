@@ -3,6 +3,8 @@
 ## Configuración inicial para el *PIC16F887*
 
 ```
+// Ian Mu;oz Nu;ez
+
 #include <xc.h>
 #include <pic16f887.h>
 
@@ -38,6 +40,8 @@ En el proyecto 1 se hizo un código en ***C*** para hacer parpadear un led con e
 ***RB0*** del ***PIC***.
 
 ```
+// Ian Mu;oz Nu;ez
+
 #define _XTAL_FREQ 4000000
 #define led PORTBbits.RB0
 
@@ -66,6 +70,8 @@ desde el pin ***RA0*** y se tiene una salida digital en el pin ***RB0***.
 Al presionar el botón, el led parpadea dos veces.
 
 ```
+// Ian Mu;oz Nu;ez
+
 #define _XTAL_FREQ 4000000
 #define entrada PORTAbits.RA0
 #define salida PORTBbits.RB0
@@ -105,6 +111,8 @@ En el proyecto 3 se escribió un código en ***C*** con el que se muestra en una
 una secuencia binaria del 0 al 31.
 
 ```
+// Ian Mu;oz Nu;ez
+
 #define _XTAL_FREQ 4000000
 #define salida PORTB
 
@@ -132,6 +140,8 @@ En este proyecto se escribió un script en ***C*** en el que se muestra una secu
 decimal del 0 al 9 en un dislpay de 7 segmentos.
 
 ```
+// Ian Mu;oz Nu;ez
+
 #define _XTAL_FREQ 4000000
 #define salida PORTB
 
@@ -186,6 +196,8 @@ En el proyecto 5 se escribió un script en ***C*** en el que se reciben 5 valore
 los bits que se quieren sumar o restar y 1 para elegir el modo de resta o suma.
 
 ```
+// Ian Mu;oz Nu;ez
+
 #define _XTAL_FREQ 4000000
 #define a0 PORTAbits.RA0
 #define a1 PORTAbits.RA1
@@ -253,6 +265,8 @@ En este proyecto se hizo un script en ***C*** para generar interrupciones extern
 principal se detiene y se ejecuta el código de la interrupción.
 
 ```
+// Ian Mu;oz Nu;ez
+
 #define _XTAL_FREQ 4000000
 #define boton    PORTBbits.RB0
 #define ledVerde PORTBbits.RB1
@@ -305,6 +319,8 @@ con botones, al presionar uno, el contador incrementa y muestra el valor actual 
 en el display, mientras que otro botón hace que el contador decremente.
 
 ```
+// Ian Mu;oz Nu;ez
+
 #define _XTAL_FREQ 4000000
 #define asc PORTAbits.RA0
 #define desc PORTAbits.RA1
@@ -365,6 +381,8 @@ potenciómetro, la señal que entra se convierte de analógica a digital, luego 
 muestra en dos displays de 7 segmentos el voltaje de entrada que llega al ***PIC***.
 
 ```
+// Ian Mu;oz Nu;ez
+
 #define _XTAL_FREQ 4000000 // Configuracion de la frecuencia en 4MHz
 #define decimal PORTB // Definicion del puerto B con el nombre 'decimal'
 #define unidad PORTC // Definicion del puerto C con el nombre 'unidad'
@@ -425,6 +443,8 @@ pasos ***28BYJ-48***, en el código se crearon distintas secuencias para los pas
 motor.
 
 ```
+// Ian Mu;oz Nu;ez
+
 #define _XTAL_FREQ 4000000 // Configuracion de la frecuencia en 4MHz
 #define motor PORTB // Definicion del puerto B como 'motor'
 
@@ -470,5 +490,123 @@ void main(void)
             __delay_ms(t); // Espera de un cierto periodo de tiempo
         }
     }
+}
+```
+
+Como segunda parte del proyecto, se creo un código para conrolar la posición del motor.
+El código resultante es:
+
+```
+// Ian Mu;oz Nu;ez
+
+#define _XTAL_FREQ 4000000 // Configuracion de la frecuencia en 4MHz
+#define motor PORTB // Definicion del puerto B como 'motor'
+
+// Arreglo para un paso a la vez en sentido horario
+unsigned char unPasoCW[] = {
+    0b00001000,
+    0b00000100,
+    0b00000010,
+    0b00000001
+};
+// Arreglo para un paso a la vez en sentido antihorario
+unsigned char unPasoCCW[] = {
+    0b00000001,
+    0b00000010,
+    0b00000100,
+    0b00001000
+};
+
+// Arreglo para dos pasos a la vez en sentido horario
+unsigned char dosPasosCW[] = {
+    0b00001100,
+    0b00000110,
+    0b00000011,
+    0b00001001
+};
+// Arreglo para dos pasos a la vez en sentido antihorario
+unsigned char dosPasosCCW[] = {
+    0b00000011,
+    0b00000110,
+    0b00001100,
+    0b00001001
+};
+
+// Arreglo para la configuracion a medio paso del motor en sentido horario
+unsigned char medioPasoCW[] = {
+    0b00001000,
+    0b00001100,
+    0b00000100,
+    0b00000110,
+    0b00000010,
+    0b00000011,
+    0b00000001,
+    0b00001001
+};
+// Arreglo para la configuracion a medio paso del motor en sentido antihorario
+unsigned char medioPasoCCW[] = {
+    0b00000001,
+    0b00000011,
+    0b00000010,
+    0b00000110,
+    0b00000100,
+    0b00001100,
+    0b00001000,
+    0b00001001
+};
+
+int analogRead(); // Prototipo de la funcion para lecturas analogicas
+int t = 2; // Tiempo de espera entre cada paso
+
+void main(void)
+{
+    TRISB = 0x00; // Configuracion de los pines del puerto B como salidas
+    ANSEL = 0x01; // Activacion de la lectura analogica por el pin RA0
+    ADCON1 = 0x80; // Lectura analogica justificada a la derecha
+
+    int i=0; // Variables para los pasos del motor
+    int pasos=4; // Numero de pasos para llegar a un angulo de 5.625: 4/8
+    // Angulo del motor, angulo deseado, error entre el angulo actual y deseado
+    float angle=0, valor, error;
+
+    while(1)
+    {
+        valor = analogRead()*0.3519; // Valor leido multiplicado por 360/1023
+        error = valor-angle; // Error calculado
+
+        if(error > 3)
+        {
+            __delay_ms(t); // Espera de t milisegundos
+            motor = dosPasosCW[i]; // Paso siguiente en sentido horario
+            angle += 0.1757; // Incrementa el valor del angulo
+            i++; // Incrementa el iterador de pasos
+        }
+
+        if(error < -3)
+        {
+            __delay_ms(t); // Espera de t milisegundos
+            motor = dosPasosCCW[i]; // Paso siguiente en sentido antihorario
+            angle -= 0.1757; // Decrementa el valor del angulo
+            i++; // Incrementa el iterador de pasos
+        }
+
+        if(i == pasos)
+        {
+            i = 0; // Si el iterador de pasos llega al limite, inicia de nuevo
+        }
+    }
+}
+
+int analogRead()
+{
+    ADCON0bits.ADCS = 0b01; // Reloj de conversion / Velocidad de conversion
+    ADCON0bits.CHS = 0; // Canal analogico para la lectura
+    ADCON0bits.ADON = 1; // Activacion de la lectura analogica-digital
+
+    ADCON0bits.GO = 1; // Encendido del conversor
+    while(ADCON0bits.GO == 1){NOP();} // Mientras el conversor este encendido, no hay operacion
+    int valor = (ADRESH<<8)+ADRESL; // Valor digital obtenido
+
+    return valor;
 }
 ```
